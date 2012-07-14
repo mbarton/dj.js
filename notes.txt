@@ -1,0 +1,2 @@
+- Appears there is a 1 to 1 relationship between HTMLMediaElements and MediaElementSources. Trying to create multiple sources from a single element leads to an exception
+- When I tried to connect multiple MediaElementSources to a single GainNode (v temporarily in the swapping code), it lead to sound from a deck disappearing on every swap. According to the API, fan out should just work so either a bug or more likely I messed up the class code somehow. Maybe write a little test
