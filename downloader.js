@@ -1,65 +1,58 @@
-var downloader;
+var Downloader = function(aud_ctx_, gui_selecter_){
+	var gui_tmpl = "<table><tr><td colspan='3'><strong>Downloader</strong></td></tr>" + 
+	               "<% _.each(files, function(file){ %> <tr>" +
+	               "<td><%= file.src %></td><td>readyState: <%= file.elem.readyState %></td><td>downloaded: <%= file.downloaded %></td>" +
+	               "</tr> <% }); %></table>";
+	var aud_ctx = aud_ctx_;
+	var gui_selecter = gui_selecter_;
+	var files = [];
 
-(function($){
-
-var files = [];
-var gui_selecter;
-
-function update_gui(selecter)
-{
-	var gui_tmpl = "<hr /><% _.each(files, function(file){ %> <%= file.src %> - readyState: <%= file.elem.readyState %> - downloaded: <%= file.downloaded %> <hr /> <% }); %>";
-	$(selecter).html(_.template(gui_tmpl, {"files": files}));
-}
-
-function check_download()
-{
-	var all_downloaded = true;
-
-	_.each(files, function(file)
+	function update_gui(selecter)
 	{
-		if(!file.downloaded){
-			if(file.elem.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA){
-				file.downloaded = true;
-				file.callback(file.elem);
-			}else{
-				all_downloaded = false;
+		$(selecter).html(_.template(gui_tmpl, {"files": files}));
+	}
+
+	function check_download()
+	{
+		var all_downloaded = true;
+
+		_.each(files, function(file)
+		{
+			if(!file.downloaded){
+				if(file.elem.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA){
+					file.downloaded = true;
+					file.node = aud_ctx.createMediaElementSource(file.elem);
+					file.callback(file.elem, file.node);
+				}else{
+					all_downloaded = false;
+				}
 			}
-		}
 
-		if(gui_selecter)
-			update_gui(gui_selecter);
-	});
-
-	if(!all_downloaded)
-			setTimeout(check_download, 400);
-}
-
-function setGUIContainer(selecter){
-	gui_selecter = selecter;
-}
-
-function download(src, callback){
-	var existing_entry = _.find(files, function(file){ return file.src === src; });
-
-	if(existing_entry !== undefined){
-		callback(src, existing_entry.elem)
-	}else{
-		var elem = new Audio();
-		elem.src = src;
-
-		files.push({
-			"src": src,
-			"elem": elem,
-			"callback": callback,
-			"downloaded": false
+			if(gui_selecter)
+				update_gui(gui_selecter);
 		});
 
-		check_download();
+		if(!all_downloaded)
+				setTimeout(check_download, 400);
 	}
-}
 
-downloader = {
-	"download": download,
-	"setGUIContainer": setGUIContainer
-}
-})(jQuery);
+	this.download = function(src, callback){
+		var existing_entry = _.find(files, function(file){ return file.src === src; });
+
+		if(existing_entry !== undefined){
+			callback(existing_entry.elem, existing_entry.node)
+		}else{
+			var elem = new Audio();
+			elem.src = src;
+
+			files.push({
+				"src": src,
+				"elem": elem,
+				"callback": callback,
+				"downloaded": false
+			});
+
+			check_download();
+		}
+	};
+};
